@@ -9,7 +9,11 @@ import java.awt.*;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Circle.class, name = "circle"),
+        @JsonSubTypes.Type(value = component.Circle.class, name = "Circle"),
+        @JsonSubTypes.Type(value = component.Line.class, name = "Line"),
+        @JsonSubTypes.Type(value = component.Rectangle.class, name = "Rectangle"),
+        @JsonSubTypes.Type(value = component.Square.class, name = "Square"),
+        @JsonSubTypes.Type(value = component.Triangle.class, name = "Triangle")
 })
 public abstract class BaseComponent {
     private int x;

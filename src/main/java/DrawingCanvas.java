@@ -1,5 +1,5 @@
-import component.Circle;
-import component.BaseComponent;
+import component.*;
+import component.Rectangle;
 import listener.ComponentChangeListener;
 
 import javax.swing.*;
@@ -18,8 +18,9 @@ public class DrawingCanvas extends JComponent {
 
     private final ComponentList componentList;
 
+    private int selectedComponentIndex = 0;
+    private int componentEnumSelectedIndex;
 
-    private int index = -1;
 
     public DrawingCanvas(int w, int h, ComponentChangeListener componentChangeListener) {
         this.width = w;
@@ -48,11 +49,38 @@ public class DrawingCanvas extends JComponent {
         for (int i = 0; i < componentList.getComponents().size(); i++) {
             BaseComponent p = componentList.getComponents().get(i);
 
-            if (p instanceof Circle) {
+            if (p instanceof Square) {
                 g.setColor(p.getColor());
                 g.translate(p.getX(), p.getY());
                 g.rotate(p.getRotation());
-                g.fillRect( - p.getWidth() / 2, -p.getHeight() / 2, p.getWidth(), p.getHeight());
+                g.fillRect(-p.getWidth() / 2, -p.getHeight() / 2, p.getWidth(), p.getHeight());
+                g.setTransform(reset);
+            }
+            else if (p instanceof Rectangle) {
+                g.setColor(p.getColor());
+                g.translate(p.getX(), p.getY());
+                g.rotate(p.getRotation());
+                g.fillRect(-p.getWidth() / 2, -p.getHeight() / 2, p.getWidth(), p.getHeight());
+                g.setTransform(reset);
+            } else if (p instanceof Circle) {
+                g.setColor(p.getColor());
+                g.translate(p.getX(), p.getY());
+                g.rotate(p.getRotation());
+                g.fillOval(-p.getWidth() / 2, -p.getHeight() / 2, p.getWidth(), p.getHeight());
+                g.setTransform(reset);
+            } else if (p instanceof component.Line) {
+                g.setColor(p.getColor());
+                g.translate(p.getX(), p.getY());
+                g.rotate(p.getRotation());
+                g.drawLine(-p.getWidth() / 2, -p.getHeight() / 2, p.getWidth() / 2, p.getHeight() / 2);
+                g.setTransform(reset);
+            } else if (p instanceof component.Triangle) {
+                g.setColor(p.getColor());
+                g.translate(p.getX(), p.getY());
+                g.rotate(p.getRotation());
+                int[] x = {0, p.getWidth() / 2, -p.getWidth() / 2};
+                int[] y = {-p.getHeight() / 2, p.getHeight() / 2, p.getHeight() / 2};
+                g.fillPolygon(x, y, 3);
                 g.setTransform(reset);
             }
 
@@ -60,18 +88,71 @@ public class DrawingCanvas extends JComponent {
 
     }
 
-    public void addComponent(int index) {
-        this.bCreating = true;
-        this.index = index;
+    public void createComponent(int red, int green, int blue) {
+        System.out.print("Creating a component: ");
+        Components selectedComponent = Components.values()[componentEnumSelectedIndex];
+        bCreating = true;
+        switch (selectedComponent) {
+            case SQUARE -> {
+                System.out.println(Components.SQUARE.name());
+                component.Square s = new component.Square();
+                s.setColor(new Color(red, green, blue)); //todo try
+
+                componentList.add(s);
+                selectedComponentIndex = componentList.getComponents().size() - 1;
+            }
+
+            case RECTANGLE -> {
+                System.out.println(Components.RECTANGLE.name());
+                component.Rectangle r = new component.Rectangle();
+                r.setColor(new Color(red, green, blue)); //todo try
+
+                componentList.add(r);
+                selectedComponentIndex = componentList.getComponents().size() - 1;
+            }
+            case CIRCLE -> {
+                System.out.println(Components.CIRCLE.name());
+                Circle c = new Circle();
+                c.setColor(new Color(red, green, blue)); //todo try
+
+                componentList.add(c);
+                selectedComponentIndex = componentList.getComponents().size() - 1;
+            }
+            case LINE -> {
+                System.out.println(Components.LINE.name());
+
+                component.Line l = new component.Line();
+                l.setColor(new Color(red, green, blue)); //todo try
+
+                componentList.add(l);
+                selectedComponentIndex = componentList.getComponents().size() - 1;
+            }
+            case TRIANGLE -> {
+                System.out.println(Components.TRIANGLE.name());
+
+                component.Triangle t = new component.Triangle();
+                t.setColor(new Color(red, green, blue)); //todo try
+
+                componentList.add(t);
+                selectedComponentIndex = componentList.getComponents().size() - 1;
+            }
+            default -> {
+                System.out.print("idk");
+            }
+        }
+        repaint();
     }
 
-    public void updateComponent(int index) {
-        this.index = index;
+    public int getSelectedComponentIndex() {
+        return selectedComponentIndex;
+    }
+
+    public void setSelectedComponentIndex(int selectedComponentIndex) {
+        this.selectedComponentIndex = selectedComponentIndex;
     }
 
 
     class MouseListener extends MouseAdapter {
-
         private int startX = -1;
 
         private int startY = -1;
@@ -79,23 +160,24 @@ public class DrawingCanvas extends JComponent {
 
         @Override
         public void mouseMoved(MouseEvent e) {
-
             super.mouseMoved(e);
         }
 
         @Override
         public void mousePressed(MouseEvent e) {
-            if (bCreating) {
-                startX = e.getX();
-                startY = e.getY();
-                BaseComponent p = componentList.getComponents().get(index);
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                createComponent(255, 0, 0);
 
-                if(p instanceof Circle){
+                if (bCreating) {
+                    startX = e.getX();
+                    startY = e.getY();
+                    BaseComponent p = componentList.getComponents().get(selectedComponentIndex);
+                    bCreating = true;
+
                     p.setX(startX);
                     p.setY(startY);
 
                     componentChangeListener.updateTableRow();
-
                 }
             }
         }
@@ -111,11 +193,23 @@ public class DrawingCanvas extends JComponent {
             //euklidovská vzdálenost dvou bodů
             //vzdalenost = odmocina (x1 - x2)^2 + odmocnina (y1 - y2)^2
             if (SwingUtilities.isLeftMouseButton(e)) {
-                if (index != -1 && bCreating){
-                    BaseComponent p = componentList.getComponents().get(index);
+                if (selectedComponentIndex != -1 && bCreating) {
+                    BaseComponent p = componentList.getComponents().get(selectedComponentIndex);
 
-                    if (p instanceof Circle) {
-
+                    if (p instanceof component.Rectangle) {
+                        p.setWidth(e.getX() - startX);
+                        p.setHeight(e.getY() - startY);
+                    } else if (p instanceof Circle) {
+                        int size = (int) Math.round(Math.sqrt(Math.pow(startX - e.getX(), 2) + Math.pow(startY - e.getY(), 2)));
+                        p.setWidth(size);
+                        p.setHeight(size);
+                    } else if (p instanceof component.Line) {
+                        p.setWidth(e.getX() - startX);
+                        p.setHeight(e.getY() - startY);
+                    } else if (p instanceof component.Triangle) {
+                        p.setWidth(e.getX() - startX);
+                        p.setHeight(e.getY() - startY);
+                    } else if (p instanceof component.Square) {
                         int size = (int) Math.round(Math.sqrt(Math.pow(startX - e.getX(), 2) + Math.pow(startY - e.getY(), 2)));
 
                         p.setWidth(size);
@@ -129,8 +223,8 @@ public class DrawingCanvas extends JComponent {
 
             if (SwingUtilities.isRightMouseButton(e)) {
                 //rotation
-                if(index != -1) {
-                    BaseComponent p = componentList.getComponents().get(index);
+                if (selectedComponentIndex != -1) {
+                    BaseComponent p = componentList.getComponents().get(selectedComponentIndex);
 
                     int rectCenterX = p.getX();
                     int rectCenterY = p.getY();
@@ -143,5 +237,13 @@ public class DrawingCanvas extends JComponent {
             }
 
         }
+    }
+
+    public int getComponentEnumSelectedIndex() {
+        return componentEnumSelectedIndex;
+    }
+
+    public void setComponentEnumSelectedIndex(int componentEnumSelectedIndex) {
+        this.componentEnumSelectedIndex = componentEnumSelectedIndex;
     }
 }

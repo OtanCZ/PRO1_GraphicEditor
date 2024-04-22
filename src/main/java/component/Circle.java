@@ -5,7 +5,7 @@ public class Circle extends BaseComponent {
     private static int circleCount = 1;
 
     public Circle(){
-        setName("Circle " + circleCount); //todo cislovani
+        setName("Circle " + circleCount);
         circleCount++;
     }
 
@@ -13,7 +13,7 @@ public class Circle extends BaseComponent {
         this();
         setX(x);
         setY(y);
-        setRadius(radius); //this.radius = radius;
+        setRadius(radius);
     }
 
     public int getRadius() {

@@ -1,5 +1,6 @@
 
 import component.Circle;
+import component.Components;
 import listener.ComponentChangeListener;
 
 import javax.swing.*;
@@ -28,31 +29,34 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
 
     private final JLabel editingTime;
 
+    private int selectedComponentIndex;
 
-    public EditorWindow(int w, int h) throws HeadlessException{
+
+    public EditorWindow(int w, int h) throws HeadlessException {
         setSize(w, h);
         setTitle("My Perfect Vector Editor");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.drawingCanvas = new DrawingCanvas(w, h, this);
         this.componentList = ComponentList.getINSTANCE();
         this.projectSaver = new ProjectSaver(componentList);
-
         setVisible(true);
-
         setLayout(new BorderLayout());
 
-
-        JToolBar toolBar = new JToolBar(JToolBar.VERTICAL);
-
-        add(toolBar, BorderLayout.LINE_END);
-
+        JPanel barPanel = new JPanel();
+        barPanel.setLayout(new BoxLayout(barPanel, BoxLayout.Y_AXIS));
+        add(barPanel, BorderLayout.PAGE_START);
         add(drawingCanvas, BorderLayout.CENTER);
 
         JMenuBar mainMenuBar = new JMenuBar();
-        add(mainMenuBar, BorderLayout.PAGE_START);
+        barPanel.add(mainMenuBar);
+
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setOrientation(JToolBar.HORIZONTAL);
+        barPanel.add(toolBar);
+
 
         JMenu fileMenu = new JMenu("File");
-
         mainMenuBar.add(fileMenu);
 
         JMenuItem openProject = new JMenuItem("Open project");
@@ -67,7 +71,7 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
             openChooser.setFileFilter(filter);
 
             int result = openChooser.showOpenDialog(this);
-            if(result == JFileChooser.APPROVE_OPTION){
+            if (result == JFileChooser.APPROVE_OPTION) {
                 String selectedFilePath = openChooser.getSelectedFile().getAbsolutePath();
                 System.out.println(selectedFilePath);
                 projectSaver.loadProject(selectedFilePath);
@@ -81,7 +85,7 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
             JFileChooser saveChooser = new JFileChooser();
             saveChooser.setDialogTitle("Specify a project to save");
             int result = saveChooser.showSaveDialog(this);
-            if(result == JFileChooser.APPROVE_OPTION){
+            if (result == JFileChooser.APPROVE_OPTION) {
                 String saveLocation = saveChooser.getSelectedFile().getAbsolutePath();
                 projectSaver.saveProject(saveLocation + ".json");
                 System.out.println("Save: " + saveLocation + ".json");
@@ -92,14 +96,10 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
         fileMenu.add(openProject);
         fileMenu.add(saveProject);
 
-        JPanel panObjects = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panObjects.setMaximumSize(new Dimension(TOOLBAR_WIDTH, 35));
-
-        JButton btnAddCircle = new JButton("Circle");
-
-        panObjects.add(btnAddCircle);
-        JButton btnAddOval = new JButton("Oval");
-        panObjects.add(btnAddOval);
+        JComboBox<String> componentsComboBox = new JComboBox<>();
+        for (Components c : Components.values()) {
+            componentsComboBox.addItem(c.getTitle());
+        }
 
         JPanel panRgb = new JPanel(new FlowLayout());
 
@@ -136,10 +136,8 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
 
         panRgb.setMaximumSize(new Dimension(TOOLBAR_WIDTH, 35));
 
-
-        toolBar.add(panObjects);
+        toolBar.add(componentsComboBox);
         toolBar.add(panRgb);
-
 
         componentTableModel = new ComponentTableModel(componentList);
 
@@ -149,11 +147,10 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
         tableComponents.setPreferredSize(new Dimension(200, 100));
         tableComponents.setPreferredScrollableViewportSize(tableComponents.getPreferredSize());
 
-
         tableComponents.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                drawingCanvas.updateComponent(tableComponents.getSelectedRow());
+                drawingCanvas.setSelectedComponentIndex(tableComponents.getSelectedRow());
             }
         });
 
@@ -163,20 +160,14 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
 
         toolBar.add(scrollTable);
 
-        btnAddCircle.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Circle c = new Circle();
 
-                c.setColor(new Color(Integer.parseInt(txtRed.getText()), Integer.parseInt(txtGreen.getText()), Integer.parseInt(txtBlue.getText()))); //todo try
-
-                componentList.add(c);
-                drawingCanvas.addComponent(componentList.getComponents().size() - 1);
-            }
+        componentsComboBox.addActionListener(e -> {
+            // I fucking hate this code, it's not mine though and I won't be remaking it
+            drawingCanvas.setComponentEnumSelectedIndex(componentsComboBox.getSelectedIndex());
         });
 
         editingTime = new JLabel("00:00:00");
-        add(editingTime, BorderLayout.PAGE_END);
+        //add(editingTime, BorderLayout.PAGE_END);
     }
 
     @Override
@@ -186,10 +177,10 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
 
     @Override
     public void updateTableRow() {
-        tableComponents.changeSelection(componentTableModel.getRowCount()-1, 0, true, false);
+        tableComponents.changeSelection(componentTableModel.getRowCount() - 1, 0, true, false);
     }
 
-    public void updateAll(){
+    public void updateAll() {
         drawingCanvas.repaint();
         onComponentsChange();
         updateTableRow();
@@ -200,8 +191,8 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
         //10584
         Long editTime = componentList.getEditTime();
         int hours = (int) (editTime / 3600); //10584 / 3600 = 2,94 = 2
-        int minutes = (int)(editTime / 60); //10584 / 60 = 176,4 = 176 - (hours * 60) = 56
-        int seconds = (int)(editTime - (3600 * hours - 60 * minutes));
+        int minutes = (int) (editTime / 60); //10584 / 60 = 176,4 = 176 - (hours * 60) = 56
+        int seconds = (int) (editTime - (3600 * hours - 60 * minutes));
 
         editingTime.setText(String.format("%02d", hours) + ":" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds));
     }
