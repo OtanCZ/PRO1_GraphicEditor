@@ -1,12 +1,11 @@
 package component;
 
 public enum Components {
-    SQUARE("■"),
+    //SQUARE("■"),
     RECTANGLE("▬"),
     CIRCLE("○"),
     TRIANGLE("▲"),
-    LINE("|"),
-    TEXT("A");
+    LINE("|");
 
     String title;
 

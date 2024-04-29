@@ -4,11 +4,10 @@ public class ComponentTableModel extends AbstractTableModel {
 
     private final ComponentList components;
 
-    private final String[] columnNames = {"Name", "Width"};
+    private final String[] columnNames = {"Name", "Width", "Height"};
 
     public ComponentTableModel(ComponentList components) {
         this.components = components;
-
     }
 
     @Override

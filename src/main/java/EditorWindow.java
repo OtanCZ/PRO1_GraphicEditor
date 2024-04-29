@@ -1,9 +1,12 @@
 
+import component.BaseComponent;
 import component.Circle;
 import component.Components;
 import listener.ComponentChangeListener;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -113,30 +116,48 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
 
         JLabel labRed = new JLabel("R: ");
         JFormattedTextField txtRed = new JFormattedTextField(numberFormatter);
-        txtRed.setText("0");
+        txtRed.setValue(0);
         txtRed.setColumns(3);
         panRgb.add(labRed);
         panRgb.add(txtRed);
 
         JLabel labGreen = new JLabel("G: ");
         JFormattedTextField txtGreen = new JFormattedTextField(numberFormatter);
-        txtGreen.setText("0");
+        txtGreen.setValue(0);
         txtGreen.setColumns(3);
         panRgb.add(labGreen);
         panRgb.add(txtGreen);
 
         JLabel labBlue = new JLabel("B: ");
         JFormattedTextField txtBlue = new JFormattedTextField(numberFormatter);
-        txtBlue.setText("0");
+        txtBlue.setValue(0);
         txtBlue.setColumns(3);
-
         panRgb.add(labBlue);
         panRgb.add(txtBlue);
 
+        JButton btnColor = new JButton("Set color");
+        btnColor.addActionListener(e -> {
+            drawingCanvas.setSelectedColor(new Color((Integer) txtRed.getValue(), (Integer) txtGreen.getValue(), (Integer) txtBlue.getValue()));
+        });
+
+        panRgb.add(btnColor);
 
         panRgb.setMaximumSize(new Dimension(TOOLBAR_WIDTH, 35));
 
-        toolBar.add(componentsComboBox);
+        JPanel componentPanel = new JPanel();
+        componentPanel.add(new Label("Shape: "));
+        componentPanel.add(componentsComboBox);
+
+        JPanel left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        left.add(componentPanel);
+
+        JCheckBox squaredBox = new JCheckBox();
+        JPanel squaredPanel = new JPanel();
+        squaredPanel.add(new Label("Squared: "));
+        squaredPanel.add(squaredBox);
+        left.add(squaredPanel);
+        toolBar.add(left);
         toolBar.add(panRgb);
 
         componentTableModel = new ComponentTableModel(componentList);
@@ -154,11 +175,29 @@ public class EditorWindow extends JFrame implements ComponentChangeListener {
             }
         });
 
+        squaredBox.addActionListener(e -> {
+            drawingCanvas.setSquared(squaredBox.isSelected());
+        });
+
         JScrollPane scrollTable = new JScrollPane(tableComponents);
 
-        scrollTable.setMaximumSize(new Dimension(TOOLBAR_WIDTH, 100));
+        scrollTable.setMaximumSize(new Dimension(TOOLBAR_WIDTH*2, 100));
 
-        toolBar.add(scrollTable);
+        JPanel complistPanel = new JPanel();
+        complistPanel.setLayout(new BoxLayout(complistPanel, BoxLayout.Y_AXIS));
+
+        complistPanel.add(scrollTable);
+        JButton btnRemove = new JButton("Remove component");
+        btnRemove.addActionListener(e -> {
+            if(tableComponents.getSelectedRow() < 1) return;
+
+            BaseComponent selectedComponent = componentList.getComponents().get(tableComponents.getSelectedRow());
+            componentList.remove(selectedComponent);
+            updateAll();
+        });
+
+        complistPanel.add(btnRemove);
+        toolBar.add(complistPanel);
 
 
         componentsComboBox.addActionListener(e -> {

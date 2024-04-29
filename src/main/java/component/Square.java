@@ -1,5 +1,6 @@
 package component;
 
+//unused
 public class Square extends BaseComponent {
     private static int squareCount = 1;
 
